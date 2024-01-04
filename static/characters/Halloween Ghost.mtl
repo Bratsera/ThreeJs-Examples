@@ -1,0 +1,17 @@
+# Blender MTL File: 'Ghost.blend'
+# Material Count: 1
+
+newmtl Ghost
+Ns 199.999995
+Ka 1.000000 1.000000 1.000000
+Kd 0.600000 0.600000 0.600000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Bump Textures/Ghost_Normal.png
+map_Ke Textures/Ghost_Emissive.png
+map_Ns Textures/Ghost_Roughness.png
+map_d Textures/Ghost_Opacity.png
+refl Textures/Ghost_Metallic.png
