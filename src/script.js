@@ -674,7 +674,7 @@ let textGeometry
 const textMaterial = new THREE.MeshBasicMaterial({ color: '#8a0303' })
 const fontLoader = new FontLoader()
 fontLoader.load(
-    '/fonts/Bloody_Normal.json',
+    './fonts/Bloody_Normal.json',
     (font) => {
         loadedFont = font
         textGeometry = new TextGeometry(
