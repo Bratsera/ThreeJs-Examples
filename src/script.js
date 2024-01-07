@@ -1,29 +1,80 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import GUI from 'lil-gui'
-import { TGALoader } from 'three/addons/loaders/TGALoader.js';
+import { TGALoader } from 'three/addons/loaders/TGALoader.js'
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
-import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
-import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
 /**
  * Base
  */
 // Debug
 const gui = new GUI()
-
+const debugObject = {
+    silentHillMode: () => {
+            if (isSilentHillMode)
+                normalMode()
+            else
+                silentHillMode()
+            silentHillTimer = 30
+    }
+}
+gui.hide()
+gui.add(debugObject, 'silentHillMode').name('Start/Stop Silent Hill Mode')
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
 
+// Info dialog
+const infoDialog = document.querySelector('.info')
+infoDialog.addEventListener('click', event => {
+    if (event.target === event.currentTarget) {
+        event.currentTarget.close()
+        clock.start()
+        tick();
+    }
+})
+infoDialog.showModal()
+
+document.addEventListener('keydown', ($event) => {
+    if ($event.key == " ") {
+        if (infoDialog.open) {
+            infoDialog.close()
+
+            clock.start()
+            tick();
+        }
+        else {
+            infoDialog.showModal()
+            clock.stop()
+        }
+    }
+})
+
+// Display mode
+const violenceCbx = document.getElementById('violence-cbx')
+violenceCbx.addEventListener('change', ($event) =>{
+    if(violenceCbx.checked){
+        if (isSilentHillMode){
+            normalMode()
+            renderer.render(scene, camera)
+        }
+        text.visible = false
+        //gui.hide()
+    }
+    else{
+        text.visible = true
+        // gui.show()
+    }
+   console.log(violenceCbx.checked)
+})
 
 /**
  * Materials
  */
-const tgaLoader = new TGALoader();
+const tgaLoader = new TGALoader()
 const bloodyWoodColor = tgaLoader.load('./textures/Blood/Bloody_Wood_basecolor.tga')
 const bloodyWoodAO = tgaLoader.load('./textures/Blood/Bloody_Wood_AO.tga')
 const bloodyWoodHeight = tgaLoader.load('./textures/Blood/Bloody_Wood_Height.tga')
@@ -31,40 +82,9 @@ const bloodyWoodNormal = tgaLoader.load('./textures/Blood/Bloody_Wood_normal.tga
 const bloodyWoodMetallic = tgaLoader.load('./textures/Blood/Bloody_Wood_metallic.tga')
 const bloodyWoodRoughness = tgaLoader.load('./textures/Blood/Bloody_Wood_roughness.tga')
 
-const WoodColor = tgaLoader.load('./textures/roof/Bloody_Wood_basecolor.tga')
-const WoodAO = tgaLoader.load('./textures/roof/Bloody_Wood_AO.tga')
-const WoodHeight = tgaLoader.load('./textures/roof/Bloody_Wood_Height.tga')
-const WoodNormal = tgaLoader.load('./textures/roof/Bloody_Wood_normal.tga')
-const WoodMetallic = tgaLoader.load('./textures/roof/Bloody_Wood_metallic.tga')
-const WoodRoughness = tgaLoader.load('./textures/roof/Bloody_Wood_roughness.tga')
-// instantiate a loader
-const objectLoader = new OBJLoader()
-const mtlLoader = new MTLLoader()
-let mixer = null
-
-
-let ghost  = new THREE.Object3D()
-let ghost2 = new  THREE.Object3D()
-let ghost3  = new  THREE.Object3D()
-
-//let ghostMat
-// mtlLoader.load('characters/Halloween Ghost.mtl', (mat)=>{
-//     ghostMat = mat
-//     objectLoader.setMaterials(ghostMat)
-//     objectLoader.load('characters/Halloween Ghost.obj', (object) => {
-//         ghost = object
-//         ghost.position.set(6,0,6)
-//         ghost.scale.set(0.7,0.7,0.7)
-//        ghost.material.transparent = true
-//       ghost.material.opacity = 0.4
-//         ghost.material.color = new THREE.Color('#8b0000')
-//        scene.add(ghost)
-       
-        
-    
-//     })
-    
-// })
+let ghost = new THREE.Object3D()
+let ghost2 = new THREE.Object3D()
+let ghost3 = new THREE.Object3D()
 
 const fbxLoader = new FBXLoader()
 fbxLoader.load(
@@ -72,19 +92,13 @@ fbxLoader.load(
     (object) => {
         object.scale.set(.01, .01, .01)
         ghost = object
-        ghost2 =object.clone() 
-        ghost3 =object.clone() 
+        ghost2 = object.clone()
+        ghost3 = object.clone()
         ghost.visible = false
         ghost2.visible = false
         ghost3.visible = false
-       
-        // object.children[0].material.transparent = true
-        // object.children[0].material.opacity = 0.8
-         ghost.children[0].material.color = fogBlood.color
-        // ghost2.children[0].material.color = ghostLight2.color
-        // ghost3.children[0].material.color = ghostLight3.color
-        console.log(ghost,ghost2,ghost3)
-       scene.add(ghost,ghost2,ghost3)
+        ghost.children[0].material.color = fogBlood.color
+        scene.add(ghost, ghost2, ghost3)
     }
 )
 /**
@@ -136,7 +150,7 @@ const windowFace = textureLoader.load('./textures/window/face.jpg')
 /**
  * House
  */
-const house = new THREE.Group();
+const house = new THREE.Group()
 const houseMesh = new THREE.Mesh(
     new THREE.BoxGeometry(10, 4, 10),
     new THREE.MeshStandardMaterial({
@@ -201,9 +215,6 @@ doorMesh.position.y = 1.1
 doorMesh.rotation.y = Math.PI / 2
 doorMesh.colorSpace = THREE.SRGBColorSpace
 
-
-
-
 //Window
 const windowFrameMesh = new THREE.Mesh(
     new THREE.PlaneGeometry(2, 2),
@@ -241,7 +252,7 @@ const windowFrameMesh2 = new THREE.Mesh(
 const windowFrameMesh3 = new THREE.Mesh(
     new THREE.PlaneGeometry(2, 2),
     new THREE.MeshStandardMaterial({
-        map: windowColor,
+        map: windowBloodColor,
         transparent: true,
         alphaMap: windowAlpha,
         aoMap: windowAO,
@@ -263,11 +274,12 @@ windowFrameMesh2.position.y = 2
 windowFrameMesh2.colorSpace = THREE.SRGBColorSpace
 windowFrameMesh2.rotation.y = Math.PI
 
-windowFrameMesh3.position.x = -5.02
+windowFrameMesh3.position.x = 5.02
 windowFrameMesh3.position.z = 0
 windowFrameMesh3.position.y = 2
 windowFrameMesh3.colorSpace = THREE.SRGBColorSpace
-windowFrameMesh3.rotation.y = -Math.PI /2
+windowFrameMesh3.rotation.y = Math.PI / 2
+windowFrameMesh3.visible = false
 
 const glassMatBlack = new THREE.MeshStandardMaterial({
     color: 'black',
@@ -294,7 +306,7 @@ const windowGlassMesh2 = new THREE.Mesh(
 )
 const windowGlassMesh3 = new THREE.Mesh(
     new THREE.PlaneGeometry(1.8, 1),
-    glassMatBlack
+    monsterMat
 )
 
 
@@ -309,14 +321,15 @@ windowGlassMesh2.rotation.y = Math.PI
 windowGlassMesh2.position.x = 0
 windowGlassMesh2.colorSpace = THREE.SRGBColorSpace
 
-windowGlassMesh3.position.x = -5.01
+windowGlassMesh3.position.x = 5.01
 windowGlassMesh3.position.y = 2
-windowGlassMesh3.rotation.y = -Math.PI / 2
+windowGlassMesh3.rotation.y = Math.PI / 2
 windowGlassMesh3.colorSpace = THREE.SRGBColorSpace
+windowGlassMesh3.visible = false
 
 // Floor
 const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(60, 60),
+    new THREE.PlaneGeometry(90, 90),
     new THREE.MeshStandardMaterial({
         map: grassColor,
         roughness: grassRoughness,
@@ -333,7 +346,7 @@ floor.receiveShadow = true
 
 
 // Bushes
-const bushmaterial = new THREE.MeshStandardMaterial({ color: 'green' });
+const bushmaterial = new THREE.MeshStandardMaterial({ color: 'green' })
 const bushGeometry = new THREE.SphereGeometry(0.7, 15, 15)
 const bush1 = new THREE.Mesh(bushGeometry, bushmaterial)
 const bush2 = new THREE.Mesh(bushGeometry, bushmaterial)
@@ -359,7 +372,7 @@ bush4.scale.z = 0.4
 bush4.scale.x = 0.4
 bush4.scale.y = 0.4
 bush4.castShadow = true
-house.add(houseMesh, roofMesh, doorMesh, bush1, bush2, bush3, bush4, windowFrameMesh, windowFrameMesh2, windowFrameMesh3,windowGlassMesh,windowGlassMesh2, windowGlassMesh3)
+house.add(houseMesh, roofMesh, doorMesh, bush1, bush2, bush3, bush4, windowFrameMesh, windowFrameMesh2, windowFrameMesh3, windowGlassMesh, windowGlassMesh2, windowGlassMesh3)
 scene.add(floor, house)
 
 
@@ -400,7 +413,7 @@ const moonLight = new THREE.DirectionalLight('#ffffff', 0.4)
 moonLight.position.set(10, 17, - 15)
 
 moonLight.castShadow = true
-const targetObject = new THREE.Object3D();
+const targetObject = new THREE.Object3D()
 targetObject.position.set(0, 4, 0)
 gui.add(moonLight, 'intensity').min(0).max(1).step(0.001)
 gui.add(moonLight.position, 'x').min(- 5).max(5).step(0.001)
@@ -459,17 +472,14 @@ houseSpotLight.shadow.mapSize.width = 256
 houseSpotLight.shadow.mapSize.height = 256
 houseSpotLight.shadow.camera.far = 15
 
-
-
-
-
+//Light 1
 houselight1.add(houseSpotLight, lampFrame, lampHolder, lampTop, housePointLight)
 house.add(houselight1)
 
 // Light 2
 houselight2.copy(houselight1)
 houselight2.rotation.y = Math.PI * 1.5
-const houseSpotLight2 = houselight2.children[0];
+const houseSpotLight2 = houselight2.children[0]
 const housePointLight2 = houselight2.children[4]
 houseSpotLight2.target = new THREE.Object3D()
 houseSpotLight2.target.position.set(0, 0, 7)
@@ -477,7 +487,7 @@ houseSpotLight2.target.position.set(0, 0, 7)
 // Light 3
 houselight3.copy(houselight1)
 houselight3.rotation.y = Math.PI * 3
-const houseSpotLight3 = houselight3.children[0];
+const houseSpotLight3 = houselight3.children[0]
 const housePointLight3 = houselight3.children[4]
 houseSpotLight3.target = new THREE.Object3D()
 houseSpotLight3.target.position.set(-7, 0, 0)
@@ -485,12 +495,11 @@ houseSpotLight3.target.position.set(-7, 0, 0)
 // Light 4
 houselight4.copy(houselight1)
 houselight4.rotation.y = -Math.PI * 1.5
-const houseSpotLight4 = houselight4.children[0];
+const houseSpotLight4 = houselight4.children[0]
 const housePointLight4 = houselight4.children[4]
 houseSpotLight4.target = new THREE.Object3D()
 houseSpotLight4.target.position.set(0, 0, -7)
-
-house.add(houselight1, houselight2, houselight3, houselight4, houseSpotLight4.target, houseSpotLight3.target, houseSpotLight2.target)
+house.add(houselight1, houselight2, houselight3, houselight4, houseSpotLight4.target, houseSpotLight3.target, houseSpotLight2.target, houseSpotLight.target)
 
 
 const houseLightFolder = gui.addFolder('HouseLight')
@@ -504,31 +513,32 @@ houseLightFolder.add(houselight2.position, 'z').min(- 5).max(10).step(0.001)
 houseLightFolder.add(houselight2.rotation, 'x').min(0).max(5).step(0.1)
 houseLightFolder.add(houselight2.rotation, 'y').min(0).max(5).step(0.1)
 houseLightFolder.add(houselight2.rotation, 'z').min(0).max(5).step(0.1)
-const x = new THREE.SpotLightHelper(houseSpotLight)
-
 
 // Ghosts
-const ghostLight1 = new THREE.PointLight('#ff00ff', 6, 4)
+const ghostLight1 = new THREE.PointLight('#ff00ff', 25, 8)
 ghostLight1.position.x
-const ghostLight2 = new THREE.PointLight('#00ffff', 6, 4)
-ghostLight2.position.y = 1.5
-const ghostLight3 = new THREE.PointLight('#ffff00', 6, 4)
+const ghostLight2 = new THREE.PointLight('#00ffff', 25, 8)
+ghostLight2.position.y = 0.3
+const ghostLight3 = new THREE.PointLight('#ffff00', 25, 8)
 ghostLight1.visible = false
 ghostLight2.visible = false
 ghostLight3.visible = false
 
 function updateGhostPos(elapsedTime) {
+
     [ghostLight1, ghostLight2, ghostLight3].forEach(ghost => {
-        if (ghost.position.x > 5 && Math.abs(ghost.position.z) < 6)
-            ghost.visible = !housePointLight.visible
-        else if (ghost.position.z > 5 && Math.abs(ghost.position.x) < 6)
-            ghost.visible = !housePointLight2.visible
-        else if (ghost.position.x < -5 && Math.abs(ghost.position.z) < 6)
-            ghost.visible = !housePointLight3.visible
-        else if (ghost.position.z < -5 && Math.abs(ghost.position.x) < 6)
-            ghost.visible = !housePointLight4.visible
-        else
-            ghost.visible = true
+        if (!isSilentHillMode) {
+            if (ghost.position.x > 5 && Math.abs(ghost.position.z) < 6)
+                ghost.visible = !housePointLight.visible
+            else if (ghost.position.z > 5 && Math.abs(ghost.position.x) < 6)
+                ghost.visible = !housePointLight2.visible
+            else if (ghost.position.x < -5 && Math.abs(ghost.position.z) < 6)
+                ghost.visible = !housePointLight3.visible
+            else if (ghost.position.z < -5 && Math.abs(ghost.position.x) < 6)
+                ghost.visible = !housePointLight4.visible
+            else
+                ghost.visible = true
+        }
     })
 
     if (ghostLight1.visible) {
@@ -536,15 +546,14 @@ function updateGhostPos(elapsedTime) {
         ghostLight1.position.x = Math.cos(ghost1Angle) * (13 + Math.sin(elapsedTime * 1) * 3)
         ghostLight1.position.z = Math.sin(ghost1Angle) * (13 + Math.sin(elapsedTime * 1) * 3)
         ghostLight1.position.y = Math.abs(Math.sin(elapsedTime * 2) * 1.5 + Math.sin(elapsedTime * 4))
-        if(ghost && isSilentHillMode){
+        if (ghost && isSilentHillMode) {
             ghost.position.set(
                 ghostLight1.position.x,
                 0,
                 ghostLight1.position.z
             )
-            ghostLight1.intensity =15;
-            ghostLight1.distance =10
-            
+            ghostLight1.position.y += 0.5
+
         }
     }
 
@@ -553,15 +562,12 @@ function updateGhostPos(elapsedTime) {
         ghostLight2.position.x = Math.cos(ghost2Angle) * (16 + Math.sin(elapsedTime * 1) * 5)
         ghostLight2.position.z = Math.sin(ghost2Angle) * (16 + Math.sin(elapsedTime * 1) * 3)
         //ghostLight2.position.y = Math.abs(Math.sin(elapsedTime * 0.5)) 
-        if(ghost2 && isSilentHillMode){
+        if (ghost2 && isSilentHillMode) {
             ghost2.position.set(
                 ghostLight2.position.x,
                 0,
                 ghostLight2.position.z
             )
-            ghostLight2.intensity =15;
-            ghostLight2.distance =10
-            
         }
     }
     if (ghostLight3.visible) {
@@ -569,29 +575,23 @@ function updateGhostPos(elapsedTime) {
         ghostLight3.position.x = Math.cos(ghost3Angle) * (14 + Math.sin(elapsedTime * 1.5) * 3)
         ghostLight3.position.z = Math.sin(ghost3Angle) * (13 + Math.sin(elapsedTime * 1) * 5)
         ghostLight3.position.y = Math.abs(Math.sin(elapsedTime * 2) * 1.5 + Math.sin(elapsedTime * 4))
-        if(ghost3 && isSilentHillMode){
+        if (ghost3 && isSilentHillMode) {
             ghost3.position.set(
                 ghostLight3.position.x,
                 0,
                 ghostLight3.position.z
             )
-            ghostLight3.intensity =15;
-            ghostLight3.distance =10
-            
+            ghostLight3.position.y += 0.5
         }
     }
-
-
 }
 scene.add(ghostLight1, ghostLight2, ghostLight3)
-
 
 /**
  * Fog
  */
-
 const fogNormal = new THREE.Fog('#262837', 4, 50)
-const fogBlood = new THREE.Fog('#8b0000', 0, 40)
+const fogBlood = new THREE.Fog('#8b0000', -10, 60)
 scene.fog = fogNormal
 
 
@@ -610,9 +610,6 @@ window.addEventListener('resize', () => {
 
     // Update camera
     camera.aspect = sizes.width / sizes.height
-    if (text) {
-        //text.position.set((-camera.position.x + 2) *camera.aspect *2.6 ,(camera.position.y), -10 ); // top left
-    }
     camera.updateProjectionMatrix()
 
 
@@ -626,14 +623,18 @@ window.addEventListener('resize', () => {
  */
 // Base camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.x = 4
-camera.position.y = 2
-camera.position.z = 5
+camera.position.x = 25
+camera.position.y = 10
+camera.position.z = 0
 scene.add(camera)
 
 // Controls
 const controls = new OrbitControls(camera, canvas)
 controls.enableDamping = true
+controls.maxPolarAngle = Math.PI / 2 - 0.01
+controls.maxDistance = 30
+controls.minDistance = 10
+controls.enablePan = false
 
 /**
  * Renderer
@@ -647,23 +648,22 @@ renderer.setClearColor(fogNormal.color)
 renderer.shadowMap.enabled = true
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
-//colorTexture.generateMipmaps = false
-//colorTexture.minFilter = THREE.NearestFilter
-
 /**
  * Animate
  */
 const clock = new THREE.Clock()
-let lightOffTimer1 = (Math.random() + 0.5) * 6
-let lightOnTimer1;
-let lightOffTimer2 = (Math.random() + 0.5) * 3
-let lightOnTimer2;
-let lightOffTimer3 = (Math.random() + 0.5) * 4
-let lightOnTimer3;
-let lightOffTimer4 = (Math.random() + 0.5) * 2
-let lightOnTimer4;
-let isSilentHillMode = false;
+let lightOffTimer1 = (Math.random() + 1) * 3
+let lightOnTimer1
+let lightOffTimer2 = (Math.random() + 0.5) * 2
+let lightOnTimer2
+let lightOffTimer3 = (Math.random() + 0.5) * 3
+let lightOnTimer3
+let lightOffTimer4 = (Math.random() + 0.5) *4
+let lightOnTimer4
+let isSilentHillMode = false
 let silentHillTimer = 30
+
+
 /**
  * Fonts
  */
@@ -700,94 +700,118 @@ fontLoader.load(
         scene.add(text)
     }
 )
-
+renderer.render(scene, camera)
 const tick = () => {
-    if(mixer)
-    {
-        mixer.update(clock.getDelta())
+    if (!infoDialog.open) {
+        const elapsedTime = clock.getElapsedTime()
+        updateLampLights(elapsedTime)
+
+        if (isSilentHillMode) {
+            if (!doorMesh.visible) {
+                doorMesh.position.z = Math.sin(elapsedTime / 3) * 3
+            }
+            // Alternatively hide ghosts if light is on
+            // let list = new Array(ghost, ghost2, ghost3)
+            // list.forEach(ghost => {
+            //     if (ghost.position.x > 5 && Math.abs(ghost.position.z) < 6)
+            //         ghost.visible = !housePointLight.visible
+            //     else if (ghost.position.z > 5 && Math.abs(ghost.position.x) < 6)
+            //         ghost.visible = !housePointLight2.visible
+            //     else if (ghost.position.x < -5 && Math.abs(ghost.position.z) < 6)
+            //         ghost.visible = !housePointLight3.visible
+            //     else if (ghost.position.z < -5 && Math.abs(ghost.position.x) < 6)
+            //         ghost.visible = !housePointLight4.visible
+            //     else
+            //         ghost.visible = true
+            // })
+        }
+        updateGhostPos(elapsedTime)
+        // Update controls
+        controls.update()
+
+        // Render
+        renderer.render(scene, camera)
+
+        // Call tick again on the next frame
+        window.requestAnimationFrame(tick)
     }
-    const elapsedTime = clock.getElapsedTime()
-    updateLampLights(elapsedTime);
-
-    if (isSilentHillMode) {
-        doorMesh.position.x = Math.sin(elapsedTime / 3) * 3
-        console.log(ghost,ghost2,ghost3)
-        let list = new Array(ghost, ghost2, ghost3)
-        list.forEach(ghost => {
-            if (ghost.position.x > 5 && Math.abs(ghost.position.z) < 6)
-                ghost.visible = !housePointLight.visible
-            else if (ghost.position.z > 5 && Math.abs(ghost.position.x) < 6)
-                ghost.visible = !housePointLight2.visible
-            else if (ghost.position.x < -5 && Math.abs(ghost.position.z) < 6)
-                ghost.visible = !housePointLight3.visible
-            else if (ghost.position.z < -5 && Math.abs(ghost.position.x) < 6)
-                ghost.visible = !housePointLight4.visible
-            else
-                ghost.visible = true
-        })
-    }
-    updateGhostPos(elapsedTime)
-    // Update controls
-    controls.update()
-
-    // Render
-    renderer.render(scene, camera)
-
-    // Call tick again on the next frame
-    window.requestAnimationFrame(tick)
 }
-
 
 function updateLampLights(elapsedTime) {
     if (lightOffTimer1 && elapsedTime > lightOffTimer1) {
-        houseSpotLight.visible = false;
-        housePointLight.visible = false;
-        lightOffTimer1 = null;
-        lightOnTimer1 = elapsedTime + (Math.random() + 0.2) * 4;
+        houseSpotLight.visible = false
+        housePointLight.visible = false
+        lightOffTimer1 = null
+        lightOnTimer1 = elapsedTime + (Math.random() + 0.4) * 3
+        if (isSilentHillMode) {
+            windowGlassMesh3.material = glassMatBlack
+            windowFrameMesh3.material.map = windowColor
+        }
+
     }
     if (lightOffTimer2 && elapsedTime > lightOffTimer2) {
-        houseSpotLight2.visible = false;
-        housePointLight2.visible = false;
-        lightOffTimer2 = null;
-        lightOnTimer2 = elapsedTime + (Math.random() + 0.2) * 1;
+        houseSpotLight2.visible = false
+        housePointLight2.visible = false
+        lightOffTimer2 = null
+        lightOnTimer2 = elapsedTime + (Math.random() + 0.2) * 2
+        if (isSilentHillMode) {
+            windowGlassMesh.material = glassMatBlack
+            windowFrameMesh.material.map = windowColor
+        }
     }
 
     if (lightOffTimer3 && elapsedTime > lightOffTimer3) {
 
-        houseSpotLight3.visible = false;
-        housePointLight3.visible = false;
-        lightOffTimer3 = null;
-        lightOnTimer3 = elapsedTime + (Math.random() + 0.2) * 2;
+        houseSpotLight3.visible = false
+        housePointLight3.visible = false
+        lightOffTimer3 = null
+        lightOnTimer3 = elapsedTime + (Math.random() + 0.2) * 3
+        if (isSilentHillMode) {
+            doorMesh.visible = false
+        }
     }
     if (lightOffTimer4 && elapsedTime > lightOffTimer4) {
-        houseSpotLight4.visible = false;
-        housePointLight4.visible = false;
-        lightOffTimer4 = null;
-        lightOnTimer4 = elapsedTime + (Math.random() + 0.2) * 5;
+        houseSpotLight4.visible = false
+        housePointLight4.visible = false
+        lightOffTimer4 = null
+        lightOnTimer4 = elapsedTime + (Math.random() + 0.4) * 5
+
     }
     if (lightOnTimer1 && elapsedTime > lightOnTimer1) {
-        houseSpotLight.visible = true;
-        housePointLight.visible = true;
-        lightOffTimer1 = elapsedTime + (Math.random() + 0.5) * 6;
-        lightOnTimer1 = null;
+        houseSpotLight.visible = true
+        housePointLight.visible = true
+        lightOffTimer1 = elapsedTime + (Math.random() + 1) * 3
+        lightOnTimer1 = null
+        if (isSilentHillMode) {
+            windowGlassMesh3.material = monsterMat
+            windowFrameMesh3.material.map = windowBloodColor
+        }
     }
     if (lightOnTimer2 && elapsedTime > lightOnTimer2) {
-        houseSpotLight2.visible = true;
-        housePointLight2.visible = true;
-        lightOffTimer2 = elapsedTime + (Math.random() + 0.5) * 3;
-        lightOnTimer2 = null;
+        houseSpotLight2.visible = true
+        housePointLight2.visible = true
+        lightOffTimer2 = elapsedTime + (Math.random() + 0.5) * 2
+        lightOnTimer2 = null
+        if (isSilentHillMode) {
+            windowGlassMesh.material = glassMatHands
+            windowFrameMesh.material.map = windowBloodColor
+        }
     }
     if (lightOnTimer3 && elapsedTime > lightOnTimer3) {
-        houseSpotLight3.visible = true;
-        housePointLight3.visible = true;
-        lightOffTimer3 = elapsedTime + (Math.random() + 0.5) * 4;
-        lightOnTimer3 = null;
+        houseSpotLight3.visible = true
+        housePointLight3.visible = true
+        lightOffTimer3 = elapsedTime + (Math.random() + 0.5) * 3
+        lightOnTimer3 = null
+        if (isSilentHillMode) {
+            doorMesh.visible = true
+        }
     }
     if (lightOnTimer4 && elapsedTime > lightOnTimer4) {
-        houseSpotLight4.visible = true;
-        housePointLight4.visible = true;
-        lightOffTimer4 = elapsedTime + (Math.random() + 0.5) * 2;
-        lightOnTimer4 = null;
+        houseSpotLight4.visible = true
+        housePointLight4.visible = true
+        lightOffTimer4 = elapsedTime + (Math.random() + 0.5) *4
+        lightOnTimer4 = null
+
     }
 }
 
@@ -795,72 +819,85 @@ function silentHillMode() {
     isSilentHillMode = true
     scene.fog = fogBlood
     renderer.setClearColor(fogBlood.color)
-    windowFrameMesh.material.map = windowBloodColor
-    windowGlassMesh.material = glassBloodMat
+    windowFrameMesh2.material.map = windowBloodColor
+    windowGlassMesh2.material = glassBloodMat
     doorMesh.material.map = bloodyWoodColor
-    doorMesh.position.set(0, 1.1, -5.01)
-    doorMesh.rotation.y = Math.PI
+    doorMesh.position.set(-5.01, 1.1, 0)
+    doorMesh.rotation.y = -Math.PI / 2
     roofMesh.material = bloodWoodMat
     textMaterial.color = new THREE.Color('Black')
-    windowGlassMesh3.position.set(5.01, 1.1, 0)
-    windowFrameMesh3.position.set(5.02, 1.1, 0)
-    windowGlassMesh3.material = monsterMat
-    windowGlassMesh2.material = glassMatHands
+    windowGlassMesh3.visible = true
+    windowFrameMesh3.visible = true
+    ghost.visible = true
+    ghost2.visible = true
+    ghost3.visible = true
+    ghostLight1.visible = true
+    ghostLight2.visible = true
+    ghostLight3.visible = true
+    ghostLight1.color = fogBlood.color
+    ghostLight2.color = fogBlood.color
+    ghostLight3.color = fogBlood.color
+    ghostLight1.intensity = 25
+    ghostLight1.distance = 20
+    ghostLight2.intensity = 25
+    ghostLight2.distance = 20
+    ghostLight3.intensity = 25
+    ghostLight3.distance = 20
+    ghostLight2.position.y = 1
 }
 
 function normalMode() {
-    isSilentHillMode = false;
+    isSilentHillMode = false
     scene.fog = fogNormal
     renderer.setClearColor(fogNormal.color)
-    windowFrameMesh.material.map = windowColor
-    windowGlassMesh.material = glassMatBlack
+    windowFrameMesh2.material.map = windowColor
+    windowGlassMesh2.material = glassMatBlack
     doorMesh.material.map = doorColor
     doorMesh.position.set(5.01, 1.1, 0)
     doorMesh.rotation.y = Math.PI / 2
+    doorMesh.visible = true
     roofMesh.material = roofNormalMat
     textMaterial.color = new THREE.Color('#8a0303')
     ghost.visible = false
     ghost2.visible = false
-    ghost3.visible = false 
-    windowGlassMesh3.position.set(0, 1.1, -5.01)
-    windowFrameMesh3.position.set(0, 1.1, -5.02)
-    windowGlassMesh3.material = glassMatBlack
-    windowGlassMesh2.material = glassMatBlack
-
+    ghost3.visible = false
+    windowGlassMesh.material = glassMatBlack
+    windowFrameMesh.material.map = windowColor
+    windowGlassMesh3.visible = false
+    windowFrameMesh3.visible = false
+    ghostLight1.color = new THREE.Color('#ff00ff')
+    ghostLight2.color = new THREE.Color('#00ffff')
+    ghostLight3.color = new THREE.Color('#ffff00')
+    ghostLight2.position.y = 0.3
 }
-//Image by <a href="https://www.freepik.com/free-vector/hand-drawn-blood-handprint-background_65135373.htm#query=texture%20bloody&position=23&from_view=search&track=ais&uuid=85042561-c4e4-498f-9e8e-9e407f040c78">Freepik</a>
 tick()
 setInterval(() => {
-    silentHillTimer -= 1
-    if (silentHillTimer == 0) {
-        if (isSilentHillMode)
-            normalMode()
-        else
-            silentHillMode()
-        silentHillTimer = 30
-    }
-    text.geometry.dispose()
-    textGeometry = new TextGeometry(
-        silentHillTimer.toString(),
-        {
-            font: loadedFont,
-            size: 1,
-            height: 0.2,
-            curveSegments: 15,
-            bevelEnabled: true,
-            bevelThickness: 0.03,
-            bevelSize: 0.02,
-            bevelOffset: 0,
-            bevelSegments: 5
+    if (!violenceCbx.checked && !infoDialog.open) {
+        silentHillTimer -= 1
+        if (silentHillTimer == 0) {
+            if (isSilentHillMode)
+                normalMode()
+            else
+                silentHillMode()
+            silentHillTimer = 30
         }
-    )
+        text.geometry.dispose()
+        textGeometry = new TextGeometry(
+            silentHillTimer.toString(),
+            {
+                font: loadedFont,
+                size: 1,
+                height: 0.2,
+                curveSegments: 15,
+                bevelEnabled: true,
+                bevelThickness: 0.03,
+                bevelSize: 0.02,
+                bevelOffset: 0,
+                bevelSegments: 5
+            }
+        )
 
-    textGeometry.center()
-    text.geometry = textGeometry
+        textGeometry.center()
+        text.geometry = textGeometry
+    }
 }, 1000)
-//<a href="https://www.freepik.com/free-vector/red-ink-splatter-vector_1177184.htm#query=texture%20bloody&position=14&from_view=search&track=ais&uuid=c203ed78-0e49-48e9-afad-fb87f329b6b8">Image by starline</a> on Freepik
-
-//Cam start pos ändern
-// Blinken von facewindow ind lightupdate 
-//Foto von <a href="https://unsplash.com/de/@nseylubangi?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Nsey Benajah</a> auf <a href="https://unsplash.com/de/fotos/mannergesicht-mit-weissem-schal-5_gku5Usbzk?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Unsplash</a>
-//Image by <a href="https://www.freepik.com/free-photo/terrifying-hands-silhouettes-studio_60407002.htm#query=horror%20ghost&position=32&from_view=search&track=ais&uuid=b5417ba4-cd92-4a85-866e-2018adcf1fcf">Freepik</a>

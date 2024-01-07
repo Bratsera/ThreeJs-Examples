@@ -1,13 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>17 - Haunted House</title>
+    <title>Silent Hill Cemetery</title>
     <link rel="stylesheet" href="./style.css">
 </head>
+
 <body>
     <canvas class="webgl"></canvas>
+    <dialog class="info">
+        <div class="content">
+            <div class="warning">
+                <h1>Caution!</h1>
+                <p>This showcase contains blood and disturbing images and is therefore not suitable for
+                    children.
+                    Select here if you wish to disable this content: </p>
+                <input type="checkbox" name="gore-cbx" id="violence-cbx"><label for="gore-cbx"><b>Disable violent content</b></label>
+            </div>
+            <div class="controls">
+                <h2>Controls</h2>
+                <p>- Press SPACE to open/close this help window</p>
+                <p>- Hold the LEFT MOUSE button to rotate around the scene</p>
+                <p>- Scroll the MOUSE WHEEL to zoom in and out or hold the MIDDLE MOUSE button and move the mouse</p>
+            </div>
+            <div class="credits">
+                <h2>Credits</h2>
+                <p>Thanks to the creators of the following assets which were used in the showcase:</p>
+                <p><a href="https://unsplash.com/de/@nseylubangi?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Nsey Benajah</a>: Photo from <a href="https://unsplash.com/de/fotos/mannergesicht-mit-weissem-schal-5_gku5Usbzk?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Unsplash</a></p>
+                <p>
+                    Images by Freepik: <a href="https://www.freepik.com/free-photo/terrifying-hands-silhouettes-studio_60407002.htm">Terrifying hands</a>, 
+                    <a href="https://www.freepik.com/free-vector/hand-drawn-blood-handprint-background_65135373.htm">Blood handprint</a> 
+                </p>
+                <p>Font <a href="https://www.dafont.com/de/bloody.font">Bloody</a> by <a href="https://www.dafont.com/de/james-fordyce.d170">James Fordyce</a></p>
+                <p><a href="https://3dtextures.me/2020/11/13/window-001/">Window texture</a> from <a href=" https://3dtextures.me/">3dtextures.me</a></p>
+                
+           </div>
+        </div>
+    </dialog>
     <script type="module" src="./script.js"></script>
 </body>
+
 </html>
