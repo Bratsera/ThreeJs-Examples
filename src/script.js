@@ -576,33 +576,30 @@ house.add(houselight1, houselight2, houselight3, houselight4, houseSpotLight4.ta
 // houseLightFolder.add(houselight2.rotation, 'z').min(0).max(5).step(0.1)
 
 // Ghosts
-const ghostLight1 = new THREE.PointLight('#ff00ff', 25, 8)
+const ghostLight1 = new THREE.PointLight('#ff00ff', 15, 6)
 ghostLight1.position.x
-const ghostLight2 = new THREE.PointLight('#00ffff', 25, 8)
+const ghostLight2 = new THREE.PointLight('#00ffff', 15, 6)
 ghostLight2.position.y = 0.3
-const ghostLight3 = new THREE.PointLight('#ffff00', 25, 8)
-ghostLight1.visible = false
-ghostLight2.visible = false
-ghostLight3.visible = false
+const ghostLight3 = new THREE.PointLight('#ffff00', 15, 6)
 
 function updateGhostPos(elapsedTime) {
 
     [ghostLight1, ghostLight2, ghostLight3].forEach(ghost => {
         if (!isSilentHillMode) {
             if (ghost.position.x > 5 && Math.abs(ghost.position.z) < 6)
-                ghost.visible = !houseSpotLight.visible
+                ghost.intensity = houseSpotLight.intensity > 0 ? 0 : 15
             else if (ghost.position.z > 5 && Math.abs(ghost.position.x) < 6)
-                ghost.visible = !houseSpotLight2.visible
+                ghost.intensity = houseSpotLight2.intensity > 0 ? 0 : 15
             else if (ghost.position.x < -5 && Math.abs(ghost.position.z) < 6)
-                ghost.visible = !houseSpotLight3.visible
+                ghost.intensity = houseSpotLight3.intensity > 0 ? 0 : 15
             else if (ghost.position.z < -5 && Math.abs(ghost.position.x) < 6)
-                ghost.visible = !houseSpotLight4.visible
+                ghost.intensity = houseSpotLight4.intensity > 0 ? 0 : 15
             else
-                ghost.visible = true
+                ghost.intensity = 15
         }
     })
 
-    if (ghostLight1.visible) {
+    if (ghostLight1.intensity > 0) {
         const ghost1Angle = (elapsedTime - 3) / 4
         ghostLight1.position.x = Math.cos(ghost1Angle) * (13 + Math.sin(elapsedTime * 1) * 3)
         ghostLight1.position.z = Math.sin(ghost1Angle) * (13 + Math.sin(elapsedTime * 1) * 3)
@@ -709,20 +706,13 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.setClearColor(fogNormal.color)
 renderer.shadowMap.enabled = true
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
+renderer.shadowMap.autoUpdate = false
 
 /**
  * Animate
  */
 const clock = new THREE.Clock()
 let previousTime = 0;
-let lightOffTimer1 = (Math.random() + 1) * 3
-let lightOnTimer1
-let lightOffTimer2 = (Math.random() + 0.5) * 2
-let lightOnTimer2
-let lightOffTimer3 = (Math.random() + 0.5) * 3
-let lightOnTimer3
-let lightOffTimer4 = (Math.random() + 0.5) *4
-let lightOnTimer4
 let isSilentHillMode = false
 let silentHillTimer = 30
 
@@ -769,7 +759,6 @@ const tick = () => {
 
     if (!infoDialog.open) {
         const elapsedTime = clock.getElapsedTime()
-        //updateLampLights(elapsedTime)
 
         if (isSilentHillMode) {
             if (!doorMesh.visible) {
@@ -804,12 +793,14 @@ const tick = () => {
 }
 const ToggleLight = (lightObject, offTimer, onTimer, offAction = null, onAction = null) => {
     setTimeout(() => {
-            lightObject.visible = false
+            lightObject.intensity= 0
+            renderer.shadowMap.needsUpdate = true
              if (isSilentHillMode && offAction) {
                 offAction()
              }
              setTimeout(() => {
-                    lightObject.visible = true
+                    lightObject.intensity= 3
+                    renderer.shadowMap.needsUpdate = true
                      if (isSilentHillMode && onAction) {
                         onAction()
                      }
